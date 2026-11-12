@@ -14,6 +14,8 @@ forecast analysis, builds a static snapshot, and deploys the dashboard to
 GitHub Pages. The browser re-fetches that snapshot every five minutes, while
 new source data is collected and published hourly; this is periodic data, not a
 continuous real-time feed. The site does not need a server or API secret.
+Thunderstorm outlook uses Open-Meteo weather codes 95, 96, and 99 and is
+qualitative; the API does not provide a thunderstorm probability percentage.
 
 The workflow deploys on pushes to `main`, on its hourly schedule, and when
 manually started. GitHub Pages must allow GitHub Actions as its build and

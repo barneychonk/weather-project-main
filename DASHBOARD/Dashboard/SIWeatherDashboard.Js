@@ -2,6 +2,7 @@ let weatherData = null;
 let fahrenheit = false;
 let range = 24;
 const weatherDataUrl = new URL('weather-data.json', document.currentScript.src);
+const thunderstormCodes = new Set([95, 96, 99]);
 
 const byId = (id) => document.getElementById(id);
 const temperature = (value) => {
@@ -20,8 +21,11 @@ const formatDate = (time) => {
 		weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
 	});
 };
+const isThunderstorm = (forecast) => forecast && forecast.weather_code != null
+	&& thunderstormCodes.has(Number(forecast.weather_code));
 const iconFor = (forecast) => {
 	if (!forecast) return '🌡️';
+	if (isThunderstorm(forecast)) return '⛈️';
 	const probability = forecast.rain_prob == null ? 0 : forecast.rain_prob;
 	const rainfall = forecast.rainfall == null ? 0 : forecast.rainfall;
 	if (probability >= 60 || rainfall >= 0.5) return '🌧️';
@@ -46,7 +50,7 @@ const weatherType = (observation, forecast) => {
 function renderHourly(forecasts) {
 	const upcoming = forecasts
 		.filter((item) => item.lead <= 24)
-		.filter((item, index) => index === 0 || item.lead % 3 === 0)
+		.filter((item, index) => index === 0 || item.lead % 3 === 0 || isThunderstorm(item))
 		.slice(0, 8);
 
 	byId('hourly').innerHTML = upcoming.length
@@ -55,6 +59,7 @@ function renderHourly(forecasts) {
 				<small>${formatTime(item.time)}</small>
 				<span class="sun">${iconFor(item)}</span>
 				<strong>${temperature(item.temperature)}°</strong>
+				${isThunderstorm(item) ? '<small class="thunder">Storm forecast</small>' : ''}
 			</div>
 		`).join('')
 		: '<p class="empty-state">No upcoming forecast data.</p>';
@@ -119,6 +124,17 @@ function renderInsights(forecasts, analysis) {
 	byId('rainInsight').textContent = nextSix.length
 		? `Highest hourly rain probability: ${Math.round(rainChance)}%.`
 		: 'No near-term forecast data available.';
+
+	const nextDay = forecasts.filter((item) => item.lead <= 24);
+	const thunderstormHours = nextDay.filter(isThunderstorm);
+	const hasWeatherCodes = nextDay.some((item) => item.weather_code != null);
+	byId('thunderInsightTitle').textContent = 'Thunderstorm outlook (qualitative)';
+	byId('thunderInsight').textContent = !hasWeatherCodes
+		? 'Thunderstorm information is unavailable in this forecast.'
+		: thunderstormHours.length
+			? `Thunderstorms indicated around ${thunderstormHours.slice(0, 5)
+				.map((item) => formatTime(item.time)).join(', ')}. No percentage probability is provided.`
+			: 'No thunderstorms indicated in the next 24 hours. No percentage probability is provided.';
 
 	const overall = analysis && analysis.overall ? analysis.overall : {};
 	const temperatureMetrics = overall.temperature || {};

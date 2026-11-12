@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS forecasts (
     wind_speed   REAL,
     rain_prob    REAL,               -- precipitation probability, %
     cloud_cover  REAL,               -- %
+    weather_code INTEGER,             -- WMO code, including thunderstorm codes 95/96/99
     PRIMARY KEY (issued_at, target_time)
 );
 

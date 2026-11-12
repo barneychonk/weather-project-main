@@ -16,7 +16,8 @@ DB = HERE / "weather.db"
 MYT = timezone(timedelta(hours=8))      # Malaysia time (UTC+8)
 URL = "https://api.open-meteo.com/v1/forecast"
 HOURLY = ["temperature_2m", "relative_humidity_2m", "precipitation",
-          "wind_speed_10m", "precipitation_probability", "cloud_cover"]
+          "wind_speed_10m", "precipitation_probability", "cloud_cover",
+          "weather_code"]
 
 
 def fetch():
@@ -35,6 +36,11 @@ def init_db(con):
         columns = {row[1] for row in con.execute(f"PRAGMA table_info({table})")}
         if "cloud_cover" not in columns:
             con.execute(f"ALTER TABLE {table} ADD COLUMN cloud_cover REAL")
+    forecast_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(forecasts)")
+    }
+    if "weather_code" not in forecast_columns:
+        con.execute("ALTER TABLE forecasts ADD COLUMN weather_code INTEGER")
 
 
 def store(con, h):
@@ -47,6 +53,7 @@ def store(con, h):
         rain, wind = h["precipitation"][i], h["wind_speed_10m"][i]
         prob = h["precipitation_probability"][i]
         clouds = h["cloud_cover"][i]
+        weather_code = h["weather_code"][i]
         if tt <= now:
             con.execute(
                 """INSERT OR REPLACE INTO observations
@@ -59,9 +66,9 @@ def store(con, h):
             con.execute(
                 """INSERT OR IGNORE INTO forecasts
                    (issued_at, target_time, lead_hours, temperature, humidity,
-                    rainfall, wind_speed, rain_prob, cloud_cover)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
-                (issued, t, lead, temp, hum, rain, wind, prob, clouds))
+                    rainfall, wind_speed, rain_prob, cloud_cover, weather_code)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (issued, t, lead, temp, hum, rain, wind, prob, clouds, weather_code))
             n_fc += 1
     con.commit()
     print(f"[{issued}] stored {n_obs} observation rows, {n_fc} forecast rows")
