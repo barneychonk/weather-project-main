@@ -89,47 +89,31 @@ button, select {
   box-shadow: 0 12px 22px rgba(58, 125, 244, 0.35);
 }
 
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.nav-label {
-  margin: 18px 12px 10px;
-  color: var(--muted);
-  font-size: 0.63rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  color: var(--muted);
-  text-decoration: none;
-  font-weight: 600;
-  transition: 180ms ease;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(126, 201, 255, 0.08);
-  color: var(--text);
-}
-
-.nav-icon {
-  width: 20px;
-  text-align: center;
-  font-size: 1.05rem;
-  opacity: 0.85;
-}
-
-.nav-item.active .nav-icon {
+.weather-status {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  margin: 0 0 24px;
+  padding: 18px 10px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(18, 30, 47, 0.65);
   color: var(--primary);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  transition: color 180ms ease;
+}
+
+body[data-weather="cloudy"] .weather-status {
+  color: var(--muted);
+}
+
+body[data-weather="rain"] .weather-status {
+  color: var(--secondary);
 }
 
 .sidebar-card {
@@ -441,6 +425,13 @@ button, select {
   font-size: 1.9rem;
 }
 
+.hour .thunder {
+  color: var(--warning);
+  font-size: 0.62rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
 .hour strong {
   font-size: 1rem;
 }
@@ -600,16 +591,9 @@ button, select {
     padding: 18px 10px;
   }
 
-  .brand span,
-  .nav-label,
-  .nav-item span,
+  .brand span:not(.brand-mark),
   .sidebar-card {
     display: none;
-  }
-
-  .nav-item {
-    justify-content: center;
-    padding: 12px 8px;
   }
 
   .dashboard {
@@ -636,9 +620,10 @@ button, select {
     border-bottom: 1px solid var(--line);
   }
 
-  .nav {
-    flex-direction: row;
-    overflow-x: auto;
+  .weather-status {
+    min-height: 190px;
+    width: 72px;
+    margin: 0 auto 16px;
   }
 
   .dashboard {

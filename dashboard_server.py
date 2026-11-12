@@ -30,6 +30,9 @@ def load_weather(db_path):
         forecast_cloud_cover = (
             "cloud_cover" if "cloud_cover" in forecast_columns else "NULL AS cloud_cover"
         )
+        forecast_weather_code = (
+            "weather_code" if "weather_code" in forecast_columns else "NULL AS weather_code"
+        )
         observation = con.execute(
             f"""SELECT obs_time AS time, temperature, humidity, rainfall, wind_speed,
                        {observation_cloud_cover}
@@ -45,7 +48,7 @@ def load_weather(db_path):
                 for row in con.execute(
                     f"""SELECT target_time AS time, lead_hours AS lead, temperature,
                                humidity, rainfall, wind_speed, rain_prob,
-                               {forecast_cloud_cover}
+                               {forecast_cloud_cover}, {forecast_weather_code}
                         FROM forecasts WHERE issued_at = ?
                         ORDER BY target_time""",
                     (latest_issue,),
