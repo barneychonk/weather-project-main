@@ -215,6 +215,11 @@ function render() {
 	const current = weatherData.observation || forecasts[0] || {};
 	const weather = weatherType(weatherData.observation, forecasts[0]);
 	document.body.dataset.weather = weather;
+	byId('weatherStatus').textContent = ({
+		clear: 'CLEAR',
+		cloudy: 'CLOUDY',
+		rain: 'RAINY'
+	})[weather];
 	byId('date').textContent = formatDate(current.time);
 	byId('updated').textContent = weatherData.updated_at
 		? `Data through ${weatherData.updated_at.replace('T', ' ')} MYT`
@@ -257,6 +262,7 @@ function loadWeather() {
 			byId('updated').textContent = weatherData
 				? 'Refresh failed — showing last snapshot'
 				: 'Weather data unavailable';
+			if (!weatherData) byId('weatherStatus').textContent = 'UNAVAILABLE';
 			if (!weatherData) byId('condition').textContent = error.message;
 		});
 }
