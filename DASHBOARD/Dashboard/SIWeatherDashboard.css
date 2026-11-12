@@ -92,14 +92,14 @@ button, select {
 .weather-status {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 260px;
   margin: 0 0 24px;
   padding: 18px 10px;
-  border: 1px solid var(--line);
+  border: none;
   border-radius: 18px;
   background: rgba(18, 30, 47, 0.65);
   color: var(--primary);
-  font-size: 1.2rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: 0.16em;
   text-align: center;
@@ -614,8 +614,8 @@ body[data-weather="rain"] .weather-status {
   }
 
   .weather-status {
-    min-height: 140px;
-    width: 64px;
+    min-height: 190px;
+    width: 72px;
     margin: 0 auto 16px;
   }
 
