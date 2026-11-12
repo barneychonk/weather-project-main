@@ -2,7 +2,6 @@
 import argparse
 import json
 import sqlite3
-from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -65,7 +64,7 @@ def load_weather(db_path):
 
     return {
         "location": "Seri Iskandar, Perak",
-        "updated_at": datetime.now().astimezone().isoformat(timespec="minutes"),
+        "updated_at": latest_issue or (observation["time"] if observation else None),
         "observation": dict(observation) if observation else None,
         "forecasts": forecasts,
         "analysis": analysis,
@@ -83,7 +82,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         if path == "/":
             self.path = "/Dashboard/SIWeatherDashboard.html"
             return super().do_GET()
-        if path != "/api/weather":
+        if path not in ("/api/weather", "/Dashboard/weather-data.json"):
             return super().do_GET()
 
         try:
