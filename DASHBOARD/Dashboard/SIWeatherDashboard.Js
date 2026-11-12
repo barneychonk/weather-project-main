@@ -1,6 +1,7 @@
 let weatherData = null;
 let fahrenheit = false;
 let range = 24;
+const weatherDataUrl = new URL('weather-data.json', document.currentScript.src);
 
 const byId = (id) => document.getElementById(id);
 const temperature = (value) => {
@@ -215,7 +216,9 @@ function render() {
 	const weather = weatherType(weatherData.observation, forecasts[0]);
 	document.body.dataset.weather = weather;
 	byId('date').textContent = formatDate(current.time);
-	byId('updated').textContent = `Updated ${weatherData.updated_at || 'recently'}`;
+	byId('updated').textContent = weatherData.updated_at
+		? `Data through ${weatherData.updated_at.replace('T', ' ')} MYT`
+		: 'Weather data timestamp unavailable';
 	byId('currentTemp').innerHTML =
 		`${temperature(current.temperature)}°<span>${fahrenheit ? 'F' : 'C'}</span>`;
 	byId('condition').textContent = ({
@@ -237,10 +240,12 @@ function render() {
 }
 
 function loadWeather() {
-	byId('updated').textContent = 'Loading weather data…';
-	fetch('/api/weather', { cache: 'no-store' })
+	byId('updated').textContent = weatherData
+		? 'Refreshing weather snapshot…'
+		: 'Loading weather data…';
+	fetch(weatherDataUrl, { cache: 'no-store' })
 		.then((response) => {
-			if (!response.ok) throw new Error(`Weather API returned HTTP ${response.status}`);
+			if (!response.ok) throw new Error(`Weather data returned HTTP ${response.status}`);
 			return response.json();
 		})
 		.then((data) => {
@@ -249,8 +254,10 @@ function loadWeather() {
 			render();
 		})
 		.catch((error) => {
-		byId('updated').textContent = 'Weather data unavailable';
-		byId('condition').textContent = error.message;
+			byId('updated').textContent = weatherData
+				? 'Refresh failed — showing last snapshot'
+				: 'Weather data unavailable';
+			if (!weatherData) byId('condition').textContent = error.message;
 		});
 }
 
@@ -269,3 +276,4 @@ document.querySelectorAll('.tabs button').forEach((button) => {
 });
 window.addEventListener('resize', draw);
 loadWeather();
+window.setInterval(loadWeather, 5 * 60 * 1000);
