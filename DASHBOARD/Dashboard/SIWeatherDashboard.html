@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seri Iskandar Weather Dashboard</title>
+  <link rel="stylesheet" href="SIWeatherDashboard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">W</span> <span>S.I WeatherPal</span></div>
+
+      <div class="nav-label">Workspace</div>
+      <nav class="nav" aria-label="Main navigation">
+        <a class="nav-item active" href="#overview"><span class="nav-icon">▣</span><span>Overview</span></a>
+        <a class="nav-item" href="#forecast"><span class="nav-icon">☁</span><span>Forecast</span></a>
+        <a class="nav-item" href="#analysis"><span class="nav-icon">◔</span><span>Analysis</span></a>
+        <a class="nav-item" href="#alerts"><span class="nav-icon">⚑</span><span>Alerts</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <small>Air quality</small>
+        <strong>Moderate</strong>
+        <span class="status-pill">Good</span>
+      </div>
+    </aside>
+
+    <main class="dashboard" id="overview">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="date">WEATHERPAL</p>
+          <h1>Weather overview</h1>
+        </div>
+
+        <div class="top-actions">
+          <select class="select" id="unit" aria-label="Temperature unit">
+            <option value="c">°C Celsius</option>
+            <option value="f">°F Fahrenheit</option>
+          </select>
+          <button class="btn" id="refresh" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="hero-card">
+        <div>
+          <div class="location"><span class="pin">◎</span> Seri Iskandar, Perak</div>
+          <h2 id="currentTemp">--<span>°C</span></h2>
+          <p class="condition" id="condition">Waiting for weather data</p>
+        </div>
+
+        <div class="hero-meta">
+          <div class="weather-emoji" id="weatherIcon">🌡️</div>
+          <div class="updated" id="updated" role="status">Connecting…</div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Humidity</div>
+          <div class="stat-value" id="humidity">--<small>%</small></div>
+          <div class="stat-trend">Latest observation</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Wind speed</div>
+          <div class="stat-value" id="wind">--<small> km/h</small></div>
+          <div class="stat-trend">Latest observation</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Rain chance</div>
+          <div class="stat-value" id="rainChance">--<small>%</small></div>
+          <div class="stat-trend">Next forecast hour</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Rainfall (last hour)</div>
+          <div class="stat-value" id="rainfall">--<small> mm</small></div>
+          <div class="stat-trend">Latest observation</div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel" id="forecast">
+          <div class="panel-head">
+            <h3>Temperature &amp; rainfall</h3>
+            <div class="tabs" aria-label="Forecast range">
+              <button type="button" class="active" data-range="24">24 hours</button>
+              <button type="button" data-range="48">48 hours</button>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="chart" aria-label="Temperature chart"></canvas>
+          </div>
+
+          <div class="legend">
+            <span><b></b>Temperature</span>
+            <span><b class="rain"></b>Rainfall</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Today’s forecast</h3>
+            <span class="status">Live</span>
+          </div>
+          <div class="hourly" id="hourly"></div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="panel" id="analysis">
+          <div class="panel-head">
+            <h3>Forecast outlook</h3>
+            <span class="eyebrow">From latest forecast</span>
+          </div>
+          <div class="day-list" id="days"></div>
+        </div>
+
+        <div class="panel" id="alerts">
+          <div class="panel-head">
+            <h3>Forecast analysis</h3>
+            <span>✦</span>
+          </div>
+
+          <div class="insight">
+            <div class="bubble">🌡️</div>
+            <div><strong id="temperatureInsightTitle">Temperature</strong><p id="temperatureInsight">Waiting for forecast data.</p></div>
+          </div>
+
+          <div class="insight">
+            <div class="bubble">🌧️</div>
+            <div><strong id="rainInsightTitle">Rain outlook</strong><p id="rainInsight">Waiting for forecast data.</p></div>
+          </div>
+
+          <div class="insight">
+            <div class="bubble">📊</div>
+            <div><strong>Forecast verification</strong><p id="verificationInsight">No analysis results available yet. Run analyze.py to generate them.</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="SIWeatherDashboard.Js"></script>
+</body>
+</html>

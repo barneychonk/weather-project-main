@@ -1,0 +1,8 @@
+[
+  {
+    "workflow": "collect-weather.yml",
+    "command": "act push -W .github\\workflows\\collect-weather.yml",
+    "success": true,
+    "timestamp": "2026-11-12T07:09:49.937Z"
+  }
+]
