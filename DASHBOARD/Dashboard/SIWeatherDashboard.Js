@@ -3,8 +3,12 @@ let fahrenheit = false;
 let range = 24;
 const weatherDataUrl = new URL('weather-data.json', document.currentScript.src);
 const thunderstormCodes = new Set([95, 96, 99]);
+const rainCodes = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]);
+const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
+const cloudCodes = new Set([2, 3, 45, 48]);
 
 const byId = (id) => document.getElementById(id);
+const assetPath = (filename) => `../ASSET/${filename}`;
 const temperature = (value) => {
 	if (!Number.isFinite(value)) return '--';
 	const converted = fahrenheit ? value * 9 / 5 + 32 : value;
@@ -24,13 +28,25 @@ const formatDate = (time) => {
 const isThunderstorm = (forecast) => forecast && forecast.weather_code != null
 	&& thunderstormCodes.has(Number(forecast.weather_code));
 const iconFor = (forecast) => {
-	if (!forecast) return '🌡️';
-	if (isThunderstorm(forecast)) return '⛈️';
-	const probability = forecast.rain_prob == null ? 0 : forecast.rain_prob;
-	const rainfall = forecast.rainfall == null ? 0 : forecast.rainfall;
-	if (probability >= 60 || rainfall >= 0.5) return '🌧️';
-	if (probability >= 30 || rainfall > 0) return '🌦️';
-	return '☀️';
+	if (!forecast) return { filename: 'CLOUD.png', alt: 'Cloudy conditions' };
+	if (isThunderstorm(forecast)) return { filename: 'THUNDER.png', alt: 'Thunderstorm' };
+
+	const code = Number(forecast.weather_code);
+	const probability = Number(forecast.rain_prob);
+	const rainfall = Number(forecast.rainfall);
+	if (rainCodes.has(code) || probability >= 30 || rainfall > 0) {
+		return { filename: 'RAIN.png', alt: 'Rain expected' };
+	}
+	if (snowCodes.has(code)) return { filename: 'COLD.png', alt: 'Cold or snowy conditions' };
+	const cloudCover = Number(forecast.cloud_cover);
+	if (cloudCodes.has(code) || cloudCover >= 50) {
+		return { filename: 'CLOUD.png', alt: 'Cloudy conditions' };
+	}
+	return { filename: 'CLEAR.png', alt: 'Clear conditions' };
+};
+const iconMarkup = (forecast, className) => {
+	const icon = iconFor(forecast);
+	return `<img class="${className}" src="${assetPath(icon.filename)}" alt="${icon.alt}">`;
 };
 const weatherType = (observation, forecast) => {
 	const rain = (observation && Number(observation.rainfall) > 0)
@@ -57,7 +73,7 @@ function renderHourly(forecasts) {
 		? upcoming.map((item) => `
 			<div class="hour">
 				<small>${formatTime(item.time)}</small>
-				<span class="sun">${iconFor(item)}</span>
+				<span class="sun">${iconMarkup(item, 'forecast-icon')}</span>
 				<strong>${temperature(item.temperature)}°</strong>
 				${isThunderstorm(item) ? '<small class="thunder">Storm forecast</small>' : ''}
 			</div>
@@ -94,7 +110,7 @@ function renderDays(forecasts) {
 			return `
 				<div class="day">
 					<small>${label}</small>
-					<span class="weather">${iconFor(items[0])}</span>
+					<span class="weather">${iconMarkup(items[0], 'forecast-icon')}</span>
 					<div class="bar"><i style="left: ${start}%; width: ${width}%"></i></div>
 					<b>${temperature(high)}° / <small>${temperature(low)}°</small></b>
 				</div>
@@ -110,6 +126,8 @@ function renderInsights(forecasts, analysis) {
 		const peak = temperatures.reduce((highest, item) =>
 			item.temperature > highest.temperature ? item : highest
 		);
+		byId('temperatureInsightIcon').src =
+			assetPath(peak.temperature >= 25 ? 'HOT.png' : 'COLD.png');
 		byId('temperatureInsightTitle').textContent = 'Warmest in the next 24 hours';
 		byId('temperatureInsight').textContent =
 			`${temperature(peak.temperature)}°${fahrenheit ? 'F' : 'C'} around ${formatTime(peak.time)}.`;
@@ -247,7 +265,10 @@ function render() {
 		cloudy: 'Cloudy',
 		rain: 'Rainy conditions'
 	})[weather];
-	byId('weatherIcon').textContent = iconFor(forecasts[0]);
+	const currentIcon = iconFor(forecasts[0] || current);
+	byId('weatherIcon').src = assetPath(currentIcon.filename);
+	byId('weatherIcon').alt = currentIcon.alt;
+	byId('weatherIconCard').hidden = false;
 	byId('humidity').innerHTML = `${valueOrDash(current.humidity)}<small>%</small>`;
 	byId('wind').innerHTML = `${valueOrDash(current.wind_speed)}<small> km/h</small>`;
 	byId('rainChance').innerHTML =
