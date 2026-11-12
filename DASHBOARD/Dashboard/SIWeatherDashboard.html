@@ -46,7 +46,9 @@
         </div>
 
         <div class="hero-meta">
-          <div class="weather-emoji" id="weatherIcon">🌡️</div>
+          <div class="weather-icon-card" id="weatherIconCard" hidden>
+            <img id="weatherIcon" alt="" />
+          </div>
           <div class="updated" id="updated" role="status">Connecting…</div>
         </div>
       </section>
@@ -122,22 +124,22 @@
           </div>
 
           <div class="insight">
-            <div class="bubble">🌡️</div>
+            <div class="bubble"><img id="temperatureInsightIcon" src="../ASSET/HOT.png" alt="" /></div>
             <div><strong id="temperatureInsightTitle">Temperature</strong><p id="temperatureInsight">Waiting for forecast data.</p></div>
           </div>
 
           <div class="insight">
-            <div class="bubble">🌧️</div>
+            <div class="bubble"><img src="../ASSET/RAIN.png" alt="" /></div>
             <div><strong id="rainInsightTitle">Rain outlook</strong><p id="rainInsight">Waiting for forecast data.</p></div>
           </div>
 
           <div class="insight">
-            <div class="bubble">⚡</div>
+            <div class="bubble"><img src="../ASSET/THUNDER.png" alt="" /></div>
             <div><strong id="thunderInsightTitle">Thunderstorm outlook</strong><p id="thunderInsight">Waiting for forecast data.</p></div>
           </div>
 
           <div class="insight">
-            <div class="bubble">📊</div>
+            <div class="bubble"><img src="../ASSET/GRAPH.png" alt="" /></div>
             <div><strong>Forecast verification</strong><p id="verificationInsight">No analysis results available yet. Run analyze.py to generate them.</p></div>
           </div>
         </div>
