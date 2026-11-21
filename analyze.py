@@ -69,6 +69,22 @@ def main(db, out):
         df = fc.merge(obs, left_on="target_time", right_on="obs_time", suffixes=("_fc", "_obs"))
         df["bucket"] = pd.cut(df.lead_hours, EDGES, labels=LABELS)
         res["matched_pairs"] = len(df)
+        eligible = fc[fc.target_time <= obs.obs_time.max()]
+        unmatched = eligible.merge(
+            obs[["obs_time"]],
+            left_on="target_time",
+            right_on="obs_time",
+            how="left",
+            indicator=True,
+        )
+        unmatched = unmatched[unmatched["_merge"] != "both"]
+        res["matching"] = {
+            "eligible_forecasts": len(eligible),
+            "matched_pairs": len(df),
+            "match_rate_pct": round(len(df) / len(eligible) * 100, 1) if len(eligible) else None,
+            "missing_observation_forecast_rows": len(unmatched),
+            "missing_observation_target_hours": int(unmatched.target_time.nunique()),
+        }
         if df.empty:
             res["error"] = "no forecast has reached its target time yet"
             Path(out).parent.mkdir(parents=True, exist_ok=True)

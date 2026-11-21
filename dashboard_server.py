@@ -63,6 +63,9 @@ def load_weather(db_path):
             "generated_at": results.get("generated_at"),
             "matched_pairs": results.get("matched_pairs", 0),
             "overall": results.get("overall", {}),
+            "matching": results.get("matching", {}),
+            "by_lead_bucket": results.get("by_lead_bucket", {}),
+            "mae_by_lead_hour": results.get("mae_by_lead_hour", {}),
         }
 
     return {
