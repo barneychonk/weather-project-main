@@ -157,8 +157,21 @@ function renderInsights(forecasts, analysis) {
 	const overall = analysis && analysis.overall ? analysis.overall : {};
 	const temperatureMetrics = overall.temperature || {};
 	const tempMae = temperatureMetrics.mae;
+	const shortTerm = analysis.by_lead_bucket && analysis.by_lead_bucket.temperature
+		? analysis.by_lead_bucket.temperature["1-6h"]
+		: null;
+	const longTerm = analysis.by_lead_bucket && analysis.by_lead_bucket.temperature
+		? analysis.by_lead_bucket.temperature["25-48h"]
+		: null;
+	const bucketText = shortTerm && longTerm
+		? ` 1-6h MAE: ${Number.isFinite(shortTerm.mae) ? shortTerm.mae : '--'}°C; 25-48h MAE: ${Number.isFinite(longTerm.mae) ? longTerm.mae : '--'}°C.`
+		: '';
+	const matching = analysis.matching || {};
+	const coverageText = Number.isFinite(matching.match_rate_pct)
+		? ` Match coverage: ${matching.match_rate_pct}% (${matching.matched_pairs || 0}/${matching.eligible_forecasts || 0}); ${matching.missing_observation_forecast_rows || 0} forecast rows lack observations.`
+		: '';
 	byId('verificationInsight').textContent = Number.isFinite(tempMae)
-		? `Temperature forecast MAE: ${tempMae}°C across ${analysis.matched_pairs || 0} matched forecast/observation pairs (updated ${analysis.generated_at || 'unknown'}).`
+		? `Temperature forecast MAE: ${tempMae}°C across ${analysis.matched_pairs || 0} matched pairs.${bucketText}${coverageText} Updated ${analysis.generated_at || 'unknown'} MYT.`
 		: 'No analysis results available yet. Run analyze.py to generate them.';
 }
 

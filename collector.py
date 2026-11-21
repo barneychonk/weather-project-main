@@ -22,7 +22,7 @@ HOURLY = ["temperature_2m", "relative_humidity_2m", "precipitation",
 
 def fetch():
     params = dict(latitude=LAT, longitude=LON, hourly=",".join(HOURLY),
-                  past_hours=6, forecast_hours=48,
+                  past_hours=168, forecast_hours=48,
                   timezone="Asia/Kuala_Lumpur", wind_speed_unit="kmh")
     with urlopen(URL + "?" + urlencode(params), timeout=30) as r:
         return json.load(r)["hourly"]
