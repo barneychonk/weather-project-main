@@ -1,26 +1,26 @@
 # Weather dashboard
 
-The dashboard reads the latest observation and forecast snapshot from
+The dashboard reads the latest stored observation and forecast snapshot from
 `weather.db` and displays forecast verification values from `docs/results.json`.
-Its animated background and **RAINY** status use the current Open-Meteo
-weather-code and precipitation estimate, fetched directly by the browser every
-five minutes; neither prior-hour rainfall nor forecast rainfall determines the
-current status. The forecast panel remains a separate outlook. Open-Meteo
-current conditions are model estimates, not confirmation from a local sensor,
-and can differ from conditions at the location. The page clock and day labels
-use Malaysia time (UTC+8); the page shows the current-estimate timestamp and
-the latest forecast-snapshot timestamp separately.
+Its animated background and weather status use only the system's latest stored
+observation: **RAINY** means precipitation was recorded in the preceding hour,
+while cloud cover determines the non-rainy cloudy/clear state. Forecast values
+do not determine the current status. The dashboard does not request current
+conditions directly from Open-Meteo; the observation is supplied by the
+repository's weather-collection pipeline, whose configured provider is
+Open-Meteo. These collected values are not readings from a local physical
+sensor. The page clock and day labels use Malaysia time (UTC+8); observation
+and forecast-snapshot timestamps are displayed separately.
 
 ## GitHub Pages
 
 The hourly `collect-weather` workflow collects Open-Meteo data, including
 hourly forecasts for the next 168 hours (7 days), refreshes the forecast
 analysis, builds a static snapshot, and deploys the dashboard to
-GitHub Pages. The browser re-fetches that snapshot every five minutes, while
-new forecast data is collected and published hourly. Current Open-Meteo
-conditions are requested directly from the browser every five minutes, subject
-to the source's update cadence; this is not a continuous sensor feed. The site
-does not need a server or API secret.
+GitHub Pages. The browser re-fetches the published snapshot every five minutes, while new
+observation and forecast data is collected and published hourly. This is
+periodic data, not a continuous real-time or sensor feed. The site does not
+need a server or API secret.
 Thunderstorm outlook uses Open-Meteo weather codes 95, 96, and 99 and is
 qualitative; the API does not provide a thunderstorm probability percentage.
 
