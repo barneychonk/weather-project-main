@@ -1,32 +1,11 @@
 let weatherData = null;
-let currentWeather = null;
-let currentWeatherError = false;
 let fahrenheit = false;
 let range = 24;
 const weatherDataUrl = new URL('weather-data.json', document.currentScript.src);
-const currentWeatherUrl = new URL('https://api.open-meteo.com/v1/forecast');
-currentWeatherUrl.search = new URLSearchParams({
-	latitude: '4.3667',
-	longitude: '100.9667',
-	current: 'temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m',
-	timezone: 'Asia/Kuala_Lumpur',
-	wind_speed_unit: 'kmh'
-}).toString();
 const thunderstormCodes = new Set([95, 96, 99]);
 const rainCodes = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]);
 const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
 const cloudCodes = new Set([2, 3, 45, 48]);
-const currentConditionNames = new Map([
-	[0, 'clear'], [1, 'mainly clear'], [2, 'partly cloudy'], [3, 'overcast'],
-	[45, 'fog'], [48, 'rime fog'], [51, 'light drizzle'], [53, 'drizzle'],
-	[55, 'dense drizzle'], [56, 'freezing drizzle'], [57, 'dense freezing drizzle'],
-	[61, 'light rain'], [63, 'moderate rain'], [65, 'heavy rain'],
-	[66, 'freezing rain'], [67, 'heavy freezing rain'], [71, 'light snow'],
-	[73, 'snow'], [75, 'heavy snow'], [77, 'snow grains'], [80, 'rain showers'],
-	[81, 'rain showers'], [82, 'heavy rain showers'], [85, 'snow showers'],
-	[86, 'heavy snow showers'], [95, 'thunderstorm'], [96, 'thunderstorm with hail'],
-	[99, 'thunderstorm with hail']
-]);
 
 const byId = (id) => document.getElementById(id);
 const assetPath = (filename) => `../ASSET/${filename}`;
@@ -102,47 +81,31 @@ const weatherSummary = (observation) => {
 		return {
 			type: 'unavailable',
 			status: 'UNAVAILABLE',
-			condition: currentWeatherError
-				? 'Current Open-Meteo conditions could not be loaded; the forecast is shown separately.'
-				: 'Loading current Open-Meteo conditions.'
+			condition: 'No system weather observation is available; forecast data is shown separately.'
 		};
 	}
 
-	const code = Number(observation.weather_code);
 	const precipitation = Number(observation.rainfall);
-	if (!Number.isFinite(code) || !Number.isFinite(precipitation)) {
+	const cloudCover = Number(observation.cloud_cover);
+	if (!Number.isFinite(precipitation) || !Number.isFinite(cloudCover)) {
 		return {
 			type: 'unavailable',
 			status: 'UNAVAILABLE',
-			condition: 'Current Open-Meteo conditions are incomplete; the forecast is shown separately.'
+			condition: 'The latest system observation is incomplete; forecast data is shown separately.'
 		};
 	}
-	const isRain = rainCodes.has(code) || thunderstormCodes.has(code) || precipitation > 0;
-	const cloudCover = Number(observation.cloud_cover);
+	const isRain = precipitation > 0;
 	const type = isRain
 		? 'rain'
-		: cloudCodes.has(code) || cloudCover >= 50 ? 'cloudy' : 'clear';
-	const description = currentConditionNames.get(code)
-		|| (precipitation > 0 ? 'precipitation' : type === 'cloudy' ? 'cloudy' : 'clear');
+		: cloudCover >= 50 ? 'cloudy' : 'clear';
+	const description = isRain
+		? `${precipitation.toFixed(1)} mm recorded in the preceding hour`
+		: `${Math.round(cloudCover)}% cloud cover in the latest observation`;
 	return {
 		type,
 		status: isRain ? 'RAINY' : type === 'cloudy' ? 'CLOUDY' : 'CLEAR',
-		condition: `Open-Meteo current estimate at ${formatTime(observation.time)} MYT: ${description}.`
+		condition: `System observation at ${formatTime(observation.time)} MYT: ${description}.`
 	};
-};
-
-const currentWeatherIcon = (current) => {
-	if (!current) return { filename: 'CLOUD.png', alt: 'Current conditions unavailable' };
-	const code = Number(current.weather_code);
-	if (isThunderstorm(current)) return { filename: 'THUNDER.png', alt: 'Current thunderstorm estimate' };
-	if (rainCodes.has(code) || Number(current.rainfall) > 0) {
-		return { filename: 'RAIN.png', alt: 'Current rain estimate' };
-	}
-	if (snowCodes.has(code)) return { filename: 'COLD.png', alt: 'Current snow estimate' };
-	if (cloudCodes.has(code) || Number(current.cloud_cover) >= 50) {
-		return { filename: 'CLOUD.png', alt: 'Current cloudy estimate' };
-	}
-	return { filename: 'CLEAR.png', alt: 'Current clear estimate' };
 };
 
 function renderHourly(forecasts) {
@@ -338,24 +301,23 @@ function render() {
 	}
 
 	const forecasts = weatherData.forecasts || [];
-	const current = currentWeather || {};
-	const summary = weatherSummary(currentWeather);
+	const current = weatherData.observation || {};
+	const summary = weatherSummary(weatherData.observation);
 	document.body.dataset.weather = summary.type;
 	byId('weatherStatus').textContent = summary.status;
 	byId('date').textContent = `${formatDate(mytDateKey())} · ${mytTime()} MYT`;
-	const currentTime = currentWeather
-		? `Current conditions at ${currentWeather.time.replace('T', ' ')} MYT`
-		: 'Current conditions unavailable';
-	byId('updated').textContent = `${currentTime} · forecast data through ${
+	byId('updated').textContent = `System observation at ${
+		current.time ? `${current.time.replace('T', ' ')} MYT` : 'unavailable'
+	} · forecast data through ${
 		weatherData.updated_at ? `${weatherData.updated_at.replace('T', ' ')} MYT` : 'unknown'
 	} · page checked ${mytTime()} MYT`;
 	byId('currentTemp').innerHTML =
 		`${temperature(current.temperature)}°<span>${fahrenheit ? 'F' : 'C'}</span>`;
 	byId('condition').textContent = summary.condition;
-	const currentIcon = currentWeatherIcon(currentWeather);
+	const currentIcon = iconFor(current);
 	byId('weatherIcon').src = assetPath(currentIcon.filename);
 	byId('weatherIcon').alt = currentIcon.alt;
-	byId('weatherIconCard').hidden = false;
+	byId('weatherIconCard').hidden = !weatherData.observation;
 	byId('humidity').innerHTML = `${valueOrDash(current.humidity)}<small>%</small>`;
 	byId('wind').innerHTML = `${valueOrDash(current.wind_speed)}<small> km/h</small>`;
 	byId('rainChance').innerHTML =
@@ -391,49 +353,11 @@ function loadWeather() {
 		});
 }
 
-function loadCurrentWeather() {
-	fetch(currentWeatherUrl, { cache: 'no-store' })
-		.then((response) => {
-			if (!response.ok) throw new Error(`Current weather returned HTTP ${response.status}`);
-			return response.json();
-		})
-		.then((data) => {
-			if (!data.current) throw new Error('Current weather data is missing');
-			const current = data.current;
-				if (typeof current.time !== 'string' || !current.time
-					|| current.weather_code == null || current.precipitation == null
-					|| !Number.isFinite(Number(current.weather_code))
-					|| !Number.isFinite(Number(current.precipitation))) {
-					throw new Error('Current weather data is incomplete');
-				}
-			currentWeather = {
-				time: current.time,
-				temperature: current.temperature_2m,
-				humidity: current.relative_humidity_2m,
-				rainfall: current.precipitation,
-				wind_speed: current.wind_speed_10m,
-				cloud_cover: current.cloud_cover,
-				weather_code: current.weather_code
-			};
-			currentWeatherError = false;
-			if (weatherData) render();
-		})
-		.catch((error) => {
-			currentWeather = null;
-			currentWeatherError = true;
-			console.error('Unable to load current Open-Meteo conditions:', error);
-			if (weatherData) render();
-		});
-}
-
 byId('unit').addEventListener('change', (event) => {
 	fahrenheit = event.target.value === 'f';
 	render();
 });
-byId('refresh').addEventListener('click', () => {
-	loadWeather();
-	loadCurrentWeather();
-});
+byId('refresh').addEventListener('click', loadWeather);
 document.querySelectorAll('.tabs button').forEach((button) => {
 	button.addEventListener('click', () => {
 		document.querySelectorAll('.tabs button').forEach((tab) => tab.classList.remove('active'));
@@ -444,11 +368,7 @@ document.querySelectorAll('.tabs button').forEach((button) => {
 });
 window.addEventListener('resize', draw);
 loadWeather();
-loadCurrentWeather();
-window.setInterval(() => {
-	loadWeather();
-	loadCurrentWeather();
-}, 5 * 60 * 1000);
+window.setInterval(loadWeather, 5 * 60 * 1000);
 window.setInterval(() => {
 	byId('date').textContent = `${formatDate(mytDateKey())} · ${mytTime()} MYT`;
 }, 60 * 1000);
