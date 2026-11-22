@@ -17,10 +17,10 @@ and forecast-snapshot timestamps are displayed separately.
 The hourly `collect-weather` workflow collects Open-Meteo data, including
 hourly forecasts for the next 168 hours (7 days), refreshes the forecast
 analysis, builds a static snapshot, and deploys the dashboard to
-GitHub Pages. The browser re-fetches the published snapshot every five minutes, while new
-observation and forecast data is collected and published hourly. This is
-periodic data, not a continuous real-time or sensor feed. The site does not
-need a server or API secret.
+GitHub Pages. The browser re-fetches the published snapshot every five
+minutes, while new observation and forecast data is collected and published
+hourly. This is periodic data, not a continuous real-time or sensor feed. The
+site does not need a server or API secret.
 Thunderstorm outlook uses Open-Meteo weather codes 95, 96, and 99 and is
 qualitative; the API does not provide a thunderstorm probability percentage.
 

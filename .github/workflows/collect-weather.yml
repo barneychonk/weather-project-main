@@ -34,7 +34,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install pandas numpy requests
+        run: pip install pandas numpy
 
       - name: Collect weather data
         run: python collector.py
