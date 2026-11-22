@@ -18,11 +18,39 @@ const valueOrDash = (value, digits = 0) => (
 	Number.isFinite(value) ? Number(value).toFixed(digits) : '--'
 );
 const formatTime = (time) => time ? time.slice(11, 16) : '--:--';
+const parseDateParts = (time) => time.slice(0, 10).split('-').map(Number);
+const formatDateKey = (date) => {
+	const [year, month, day] = parseDateParts(`${date}T00:00`);
+	return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+		new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+	];
+};
+const twoDigits = (value) => value < 10 ? `0${value}` : `${value}`;
+const mytDateKey = (date = new Date()) => {
+	const myt = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+	const year = myt.getUTCFullYear();
+	const month = myt.getUTCMonth() + 1;
+	const day = myt.getUTCDate();
+	return `${year}-${twoDigits(month)}-${twoDigits(day)}`;
+};
+const mytTime = (date = new Date()) => {
+	const myt = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+	return `${twoDigits(myt.getUTCHours())}:${twoDigits(myt.getUTCMinutes())}`;
+};
+const addDays = (date, days) => {
+	const [year, month, day] = parseDateParts(`${date}T00:00`);
+	return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+};
+const labelForecastDay = (date, today = mytDateKey()) => (
+	date === today ? 'Today'
+		: date === addDays(today, 1) ? 'Tomorrow'
+			: formatDateKey(date)
+);
 const formatDate = (time) => {
 	if (!time) return 'Weather for Seri Iskandar';
-	const [year, month, day] = time.slice(0, 10).split('-').map(Number);
-	return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-		weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+	const [year, month, day] = parseDateParts(time);
+	return new Date(Date.UTC(year, month - 1, day, 12)).toLocaleDateString(undefined, {
+		weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
 	});
 };
 const isThunderstorm = (forecast) => forecast && forecast.weather_code != null
@@ -48,11 +76,16 @@ const iconMarkup = (forecast, className) => {
 	const icon = iconFor(forecast);
 	return `<img class="${className}" src="${assetPath(icon.filename)}" alt="${icon.alt}">`;
 };
-const weatherType = (observation, forecast) => {
-	const rain = (observation && Number(observation.rainfall) > 0)
-		|| (forecast && (Number(forecast.rainfall) > 0
-			|| Number(forecast.rain_prob) >= 50));
-	if (rain) return 'rain';
+const weatherSummary = (observation, forecast) => {
+	const recentRain = observation && Number(observation.rainfall) > 0;
+	const forecastRain = forecast && (Number(forecast.rainfall) > 0
+		|| Number(forecast.rain_prob) >= 50);
+	if (recentRain || forecastRain) {
+		const condition = recentRain
+			? `Open-Meteo recorded ${Number(observation.rainfall).toFixed(1)} mm in the previous hour; current rain is not sensor-confirmed.`
+			: 'Open-Meteo forecasts rain for the next hour; current rain is not sensor-confirmed.';
+		return { type: 'rain', status: 'RAINY', condition };
+	}
 
 	const hasCloudCover = (value) => value != null && Number.isFinite(Number(value));
 	const cloudCover = observation && hasCloudCover(observation.cloud_cover)
@@ -60,7 +93,12 @@ const weatherType = (observation, forecast) => {
 		: forecast && hasCloudCover(forecast.cloud_cover)
 			? Number(forecast.cloud_cover)
 			: null;
-	return cloudCover !== null && cloudCover >= 50 ? 'cloudy' : 'clear';
+	const type = cloudCover !== null && cloudCover >= 50 ? 'cloudy' : 'clear';
+	return {
+		type,
+		status: type === 'cloudy' ? 'CLOUDY' : 'CLEAR',
+		condition: `Open-Meteo ${type === 'cloudy' ? 'cloud-cover' : 'weather'} estimate; no local sensor is connected.`
+	};
 };
 
 function renderHourly(forecasts) {
@@ -97,16 +135,13 @@ function renderDays(forecasts) {
 	const rangeMax = allTemps.length ? Math.max(...allTemps) : 1;
 	const rangeMin = allTemps.length ? Math.min(...allTemps) : 0;
 	byId('days').innerHTML = days.length
-		? days.map(([date, items], index) => {
+		? days.map(([date, items]) => {
 			const temps = items.map((item) => item.temperature).filter(Number.isFinite);
 			const high = temps.length ? Math.max(...temps) : null;
 			const low = temps.length ? Math.min(...temps) : null;
 			const start = Math.max(0, ((low - rangeMin) / (rangeMax - rangeMin || 1)) * 100);
 			const width = Math.max(8, ((high - low) / (rangeMax - rangeMin || 1)) * 100);
-			const dateParts = date.split('-').map(Number);
-			const label = index === 0 ? 'Today' : new Date(
-				dateParts[0], dateParts[1] - 1, dateParts[2]
-			).toLocaleDateString(undefined, { weekday: 'short' });
+			const label = labelForecastDay(date);
 			return `
 				<div class="day">
 					<small>${label}</small>
@@ -260,24 +295,16 @@ function render() {
 
 	const forecasts = weatherData.forecasts || [];
 	const current = weatherData.observation || forecasts[0] || {};
-	const weather = weatherType(weatherData.observation, forecasts[0]);
-	document.body.dataset.weather = weather;
-	byId('weatherStatus').textContent = ({
-		clear: 'CLEAR',
-		cloudy: 'CLOUDY',
-		rain: 'RAINY'
-	})[weather];
-	byId('date').textContent = formatDate(current.time);
+	const summary = weatherSummary(weatherData.observation, forecasts[0]);
+	document.body.dataset.weather = summary.type;
+	byId('weatherStatus').textContent = summary.status;
+	byId('date').textContent = `${formatDate(mytDateKey())} · ${mytTime()} MYT`;
 	byId('updated').textContent = weatherData.updated_at
-		? `Data through ${weatherData.updated_at.replace('T', ' ')} MYT`
-		: 'Weather data timestamp unavailable';
+		? `Data through ${weatherData.updated_at.replace('T', ' ')} MYT · page checked ${mytTime()} MYT`
+		: `Weather data timestamp unavailable · page checked ${mytTime()} MYT`;
 	byId('currentTemp').innerHTML =
 		`${temperature(current.temperature)}°<span>${fahrenheit ? 'F' : 'C'}</span>`;
-	byId('condition').textContent = ({
-		clear: 'Clear skies',
-		cloudy: 'Cloudy',
-		rain: 'Rainy conditions'
-	})[weather];
+	byId('condition').textContent = summary.condition;
 	const currentIcon = iconFor(forecasts[0] || current);
 	byId('weatherIcon').src = assetPath(currentIcon.filename);
 	byId('weatherIcon').alt = currentIcon.alt;
@@ -289,7 +316,7 @@ function render() {
 	byId('rainfall').innerHTML = `${valueOrDash(current.rainfall, 1)}<small> mm</small>`;
 
 	renderHourly(forecasts);
-	renderDays(forecasts.filter((item) => item.lead <= range));
+	renderDays(forecasts.filter((item) => item.lead <= 168));
 	renderInsights(forecasts, weatherData.analysis);
 	draw();
 }
@@ -333,3 +360,6 @@ document.querySelectorAll('.tabs button').forEach((button) => {
 window.addEventListener('resize', draw);
 loadWeather();
 window.setInterval(loadWeather, 5 * 60 * 1000);
+window.setInterval(() => {
+	byId('date').textContent = `${formatDate(mytDateKey())} · ${mytTime()} MYT`;
+}, 60 * 1000);
