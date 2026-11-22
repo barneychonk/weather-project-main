@@ -4,7 +4,7 @@ analyze.py - verifies Open-Meteo forecasts against observations and writes docs/
 import argparse
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -12,8 +12,8 @@ import pandas as pd
 
 VARS = ["temperature", "humidity", "rainfall", "wind_speed"]
 UNITS = {"temperature": "degC", "humidity": "%", "rainfall": "mm", "wind_speed": "km/h"}
-EDGES = [0, 6, 12, 24, 48]
-LABELS = ["1-6h", "7-12h", "13-24h", "25-48h"]
+EDGES = [0, 6, 12, 24, 48, 72, 120, 168]
+LABELS = ["1-6h", "7-12h", "13-24h", "25-48h", "49-72h", "73-120h", "121-168h"]
 RAIN_MM = 0.1
 RAIN_PROB = 50
 
@@ -58,7 +58,8 @@ def main(db, out):
     fc = pd.read_sql("SELECT * FROM forecasts", con, parse_dates=["issued_at", "target_time"])
     con.close()
 
-    res = {"generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    myt = timezone(timedelta(hours=8))
+    res = {"generated_at": datetime.now(myt).strftime("%Y-%m-%d %H:%M"),
            "location": "Seri Iskandar, Perak", "units": UNITS,
            "counts": {"observations": len(obs), "forecasts": len(fc)}}
     if obs.empty or fc.empty:

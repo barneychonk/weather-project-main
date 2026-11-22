@@ -4,13 +4,18 @@ The dashboard reads the latest observation and forecast from `weather.db` and
 displays forecast verification values from `docs/results.json`.
 Its animated background uses the latest collected cloud cover and rain data:
 clear skies use `CLEAR.gif`, cloud cover of 50% or more uses `CLOUDY.gif`, and
-rain uses `RAIN.gif`. The collector adds the cloud-cover columns to existing
-databases automatically; run it once to collect the new values.
+rain conditions use `RAIN.gif`. The **RAINY** status is based on rain recorded
+in the previous hour or rain in the next-hour forecast; it does not mean a
+local sensor has confirmed rain falling now. The page clock and day labels use
+Malaysia time (UTC+8), while “Data through” identifies the timestamp of the
+latest published weather snapshot. The collector adds the cloud-cover columns
+to existing databases automatically; run it once to collect the new values.
 
 ## GitHub Pages
 
-The hourly `collect-weather` workflow collects Open-Meteo data, refreshes the
-forecast analysis, builds a static snapshot, and deploys the dashboard to
+The hourly `collect-weather` workflow collects Open-Meteo data, including
+hourly forecasts for the next 168 hours (7 days), refreshes the forecast
+analysis, builds a static snapshot, and deploys the dashboard to
 GitHub Pages. The browser re-fetches that snapshot every five minutes, while
 new source data is collected and published hourly; this is periodic data, not a
 continuous real-time feed. The site does not need a server or API secret.
