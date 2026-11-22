@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS observations (
 CREATE TABLE IF NOT EXISTS forecasts (
     issued_at    TEXT,               -- when we fetched the forecast (hour)
     target_time  TEXT,               -- hour the forecast is for
-    lead_hours   INTEGER,            -- target_time - issued_at, in hours (1..48)
+    lead_hours   INTEGER,            -- target_time - issued_at, in hours (1..168)
     temperature  REAL,
     humidity     REAL,
     rainfall     REAL,
